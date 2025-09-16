@@ -13,3 +13,15 @@ dist
 # Archivos de sistema
 .DS_Store
 Thumbs.db
+# Ignorar carpetas de sistema de Windows
+AppData/
+Documents/
+Cookies/
+*.log
+*.tmp
+Thumbs.db
+Desktop.ini
+.vscode/
+node_modules/
+dist/
+build/
