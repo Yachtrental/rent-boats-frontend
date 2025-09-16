@@ -1,0 +1,15 @@
+# Dependencias
+node_modules
+
+# Carpeta de build
+dist
+
+# Variables de entorno (no subir tus claves)
+.env
+
+# Logs
+*.log
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
