@@ -1,0 +1,17 @@
+# Configuración global de Git para Rent-Boats
+
+Write-Host "🔧 Configurando Git con usuario y correo..."
+
+git config --global user.name "Yachtrental"
+git config --global user.email "a.olivasleon@gmail.com"
+
+Write-Host "✅ Usuario y correo configurados"
+
+# Activar almacenamiento de credenciales para no meter el token cada vez
+Write-Host "🔐 Configurando helper de credenciales..."
+git config --global credential.helper store
+Write-Host "✅ Helper configurado (las credenciales se guardarán en texto plano en tu PC)"
+
+# Verificación
+Write-Host "`n📋 Configuración actual de Git:"
+git config --list
