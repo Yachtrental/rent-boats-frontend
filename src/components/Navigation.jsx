@@ -5,117 +5,92 @@ import { Anchor, Menu, X, Globe, User, LogOut, Ship } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
+
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const {
-    t,
-    language,
-    changeLanguage
-  } = useLanguage();
-  const {
-    user,
-    logout
-  } = useAuth();
+  const { t, language, changeLanguage } = useLanguage();
+  const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+
+  const languages = [
+    { code: 'es', name: 'Español' },
+    { code: 'en', name: 'English' },
+    { code: 'de', name: 'Deutsch' },
+    { code: 'it', name: 'Italiano' },
+  ];
+
   const handleLogout = () => {
     logout();
     navigate('/');
-    toast({
-      title: t('success'),
-      description: 'Sesión cerrada correctamente'
-    });
   };
-  const languages = [{
-    code: 'es',
-    name: 'Español'
-  }, {
-    code: 'en',
-    name: 'English'
-  }, {
-    code: 'de',
-    name: 'Deutsch'
-  }, {
-    code: 'it',
-    name: 'Italiano'
-  }, {
-    code: 'zh',
-    name: '中文'
-  }];
-  return <nav className="fixed top-0 left-0 right-0 z-50 glass-effect">
+
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-900/90 backdrop-blur border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <motion.div whileHover={{
-            rotate: 15
-          }} className="text-white">
-              <Anchor className="h-8 w-8" />
+            <motion.div whileHover={{ rotate: 15 }} className="text-white">
+              <Anchor className="h-7 w-7" />
             </motion.div>
-            <span className="text-xl font-bold text-white">Rent&Boats</span>
+            <span className="text-lg sm:text-xl font-bold text-white">Rent-Boats</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/" className="text-white hover:text-blue-200 transition-colors">
-              {t('home')}
-            </Link>
-            <Link to="/search" className="text-white hover:text-blue-200 transition-colors">
-              {t('search')}
-            </Link>
-            <Link to="/captains" className="text-white hover:text-blue-200 transition-colors">
-              {t('captains')}
-            </Link>
-            {user && <Link to="/dashboard" className="text-white hover:text-blue-200 transition-colors">
-                {t('dashboard')}
-              </Link>}
+          {/* Desktop */}
+          <div className="hidden md:flex items-center space-x-4">
+            <Link to="/" className="text-white/90 hover:text-white transition-colors">{t('home') ?? 'Inicio'}</Link>
+            <Link to="/search" className="text-white/90 hover:text-white transition-colors">{t('search') ?? 'Buscar'}</Link>
+            <Link to="/captains" className="text-white/90 hover:text-white transition-colors">{t('captains') ?? 'Patrones'}</Link>
 
-            {/* Language Selector */}
+            {/* Selector idioma */}
             <div className="relative group">
-              <Button variant="ghost" size="sm" className="text-white hover:text-blue-200">
+              <Button variant="ghost" size="sm" className="text-white/90 hover:text-white">
                 <Globe className="h-4 w-4 mr-1" />
-                {language.toUpperCase()}
+                {language?.toUpperCase?.() ?? 'ES'}
               </Button>
-              <div className="absolute top-full right-0 mt-1 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                {languages.map(lang => <button key={lang.code} onClick={() => changeLanguage(lang.code)} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 first:rounded-t-md last:rounded-b-md">
+              <div className="invisible group-hover:visible opacity-0 group-hover:opacity-100 absolute top-full right-0 mt-1 bg-white rounded-md shadow-lg transition-all duration-200">
+                {languages.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => changeLanguage(lang.code)}
+                    className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-md last:rounded-b-md"
+                  >
                     {lang.name}
-                  </button>)}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* User Menu */}
-            {user ? <div className="relative group">
-                <Button variant="ghost" size="sm" className="text-white hover:text-blue-200">
-                  <User className="h-4 w-4 mr-1" />
-                  {user.name}
+            {/* Usuario */}
+            {isAuthenticated ? (
+              <>
+                <span className="px-2 py-1 text-xs rounded bg-blue-500/20 text-blue-200 border border-blue-400/30 capitalize">
+                  {user?.role ?? 'cliente'}
+                </span>
+                <Link to="/dashboard" className="text-white/90 hover:text-white transition-colors">
+                  {t('dashboard') ?? 'Panel'}
+                </Link>
+                <Button variant="ghost" size="sm" className="text-white/90 hover:text-white" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4 mr-1" /> {t('logout') ?? 'Salir'}
                 </Button>
-                <div className="absolute top-full right-0 mt-1 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-md">
-                    {t('dashboard')}
-                  </Link>
-                  <button onClick={handleLogout} className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-md">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    {t('logout')}
-                  </button>
-                </div>
-              </div> : <div className="flex items-center space-x-2">
+              </>
+            ) : (
+              <>
                 <Link to="/login">
-                  <Button variant="ghost" size="sm" className="text-white hover:text-blue-200">
-                    {t('login')}
+                  <Button variant="ghost" size="sm" className="text-white/90 hover:text-white">
+                    {t('login') ?? 'Entrar'}
                   </Button>
                 </Link>
                 <Link to="/register">
                   <Button size="sm" className="bg-white text-blue-600 hover:bg-blue-50">
-                    {t('register')}
+                    {t('register') ?? 'Registrarse'}
                   </Button>
                 </Link>
-              </div>}
+              </>
+            )}
           </div>
 
-          {/* Mobile menu button */}
+          {/* Botón móvil */}
           <div className="md:hidden">
             <Button variant="ghost" size="sm" onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white">
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -123,48 +98,63 @@ const Navigation = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        {isMenuOpen && <motion.div initial={{
-        opacity: 0,
-        y: -20
-      }} animate={{
-        opacity: 1,
-        y: 0
-      }} exit={{
-        opacity: 0,
-        y: -20
-      }} className="md:hidden bg-white rounded-lg mt-2 shadow-lg">
-            <div className="px-4 py-2 space-y-2">
-              <Link to="/" className="block py-2 text-gray-700 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>
-                {t('home')}
-              </Link>
-              <Link to="/search" className="block py-2 text-gray-700 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>
-                {t('search')}
-              </Link>
-              <Link to="/captains" className="block py-2 text-gray-700 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>
-                {t('captains')}
-              </Link>
-              {user ? <>
-                  <Link to="/dashboard" className="block py-2 text-gray-700 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>
-                    {t('dashboard')}
-                  </Link>
-                  <button onClick={() => {
-              handleLogout();
-              setIsMenuOpen(false);
-            }} className="block w-full text-left py-2 text-gray-700 hover:text-blue-600">
-                    {t('logout')}
+        {/* Menú móvil */}
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="md:hidden pb-4 space-y-2"
+          >
+            <Link to="/" onClick={() => setIsMenuOpen(false)} className="block py-2 text-white/90 hover:text-white">{t('home') ?? 'Inicio'}</Link>
+            <Link to="/search" onClick={() => setIsMenuOpen(false)} className="block py-2 text-white/90 hover:text-white">{t('search') ?? 'Buscar'}</Link>
+            <Link to="/captains" onClick={() => setIsMenuOpen(false)} className="block py-2 text-white/90 hover:text-white">{t('captains') ?? 'Patrones'}</Link>
+
+            {isAuthenticated ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-1 text-xs rounded bg-blue-500/20 text-blue-200 border border-blue-400/30 capitalize">
+                    {user?.role ?? 'cliente'}
+                  </span>
+                </div>
+                <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="block py-2 text-white/90 hover:text-white">
+                  {t('dashboard') ?? 'Panel'}
+                </Link>
+                <button onClick={handleLogout} className="block py-2 text-left text-white/90 hover:text-white">
+                  <LogOut className="inline h-4 w-4 mr-1" /> {t('logout') ?? 'Salir'}
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setIsMenuOpen(false)} className="block py-2 text-white/90 hover:text-white">
+                  {t('login') ?? 'Entrar'}
+                </Link>
+                <Link to="/register" onClick={() => setIsMenuOpen(false)} className="block py-2 text-white/90 hover:text-white">
+                  {t('register') ?? 'Registrarse'}
+                </Link>
+              </>
+            )}
+
+            {/* Idiomas móvil */}
+            <div className="pt-2 border-t border-white/10">
+              <div className="flex gap-2 flex-wrap">
+                {languages.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => changeLanguage(lang.code)}
+                    className={`px-2 py-1 rounded text-sm ${
+                      language === lang.code ? 'bg-white text-blue-600' : 'bg-white/10 text-white'
+                    }`}
+                  >
+                    {lang.name}
                   </button>
-                </> : <>
-                  <Link to="/login" className="block py-2 text-gray-700 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>
-                    {t('login')}
-                  </Link>
-                  <Link to="/register" className="block py-2 text-gray-700 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>
-                    {t('register')}
-                  </Link>
-                </>}
+                ))}
+              </div>
             </div>
-          </motion.div>}
+          </motion.div>
+        )}
       </div>
-    </nav>;
+    </nav>
+  );
 };
+
 export default Navigation;
