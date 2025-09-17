@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Anchor, Menu, X, Globe, User, LogOut, Ship } from 'lucide-react';
+import { Anchor, Menu, X, Globe, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,6 +24,13 @@ const Navigation = () => {
     navigate('/');
   };
 
+  const RoleBadge = () =>
+    isAuthenticated ? (
+      <span className="px-2 py-1 text-xs rounded bg-blue-500/20 text-blue-200 border border-blue-400/30 capitalize">
+        {user?.role ?? 'cliente'}
+      </span>
+    ) : null;
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-900/90 backdrop-blur border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -42,7 +49,7 @@ const Navigation = () => {
             <Link to="/search" className="text-white/90 hover:text-white transition-colors">{t('search') ?? 'Buscar'}</Link>
             <Link to="/captains" className="text-white/90 hover:text-white transition-colors">{t('captains') ?? 'Patrones'}</Link>
 
-            {/* Selector idioma */}
+            {/* Idiomas */}
             <div className="relative group">
               <Button variant="ghost" size="sm" className="text-white/90 hover:text-white">
                 <Globe className="h-4 w-4 mr-1" />
@@ -64,9 +71,7 @@ const Navigation = () => {
             {/* Usuario */}
             {isAuthenticated ? (
               <>
-                <span className="px-2 py-1 text-xs rounded bg-blue-500/20 text-blue-200 border border-blue-400/30 capitalize">
-                  {user?.role ?? 'cliente'}
-                </span>
+                <RoleBadge />
                 <Link to="/dashboard" className="text-white/90 hover:text-white transition-colors">
                   {t('dashboard') ?? 'Panel'}
                 </Link>
@@ -90,7 +95,7 @@ const Navigation = () => {
             )}
           </div>
 
-          {/* Botón móvil */}
+          {/* Móvil: botón */}
           <div className="md:hidden">
             <Button variant="ghost" size="sm" onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white">
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -98,24 +103,16 @@ const Navigation = () => {
           </div>
         </div>
 
-        {/* Menú móvil */}
+        {/* Móvil: menú */}
         {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="md:hidden pb-4 space-y-2"
-          >
+          <div className="md:hidden pb-4 space-y-2">
             <Link to="/" onClick={() => setIsMenuOpen(false)} className="block py-2 text-white/90 hover:text-white">{t('home') ?? 'Inicio'}</Link>
             <Link to="/search" onClick={() => setIsMenuOpen(false)} className="block py-2 text-white/90 hover:text-white">{t('search') ?? 'Buscar'}</Link>
             <Link to="/captains" onClick={() => setIsMenuOpen(false)} className="block py-2 text-white/90 hover:text-white">{t('captains') ?? 'Patrones'}</Link>
 
             {isAuthenticated ? (
               <>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-1 text-xs rounded bg-blue-500/20 text-blue-200 border border-blue-400/30 capitalize">
-                    {user?.role ?? 'cliente'}
-                  </span>
-                </div>
+                <RoleBadge />
                 <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="block py-2 text-white/90 hover:text-white">
                   {t('dashboard') ?? 'Panel'}
                 </Link>
@@ -134,7 +131,6 @@ const Navigation = () => {
               </>
             )}
 
-            {/* Idiomas móvil */}
             <div className="pt-2 border-t border-white/10">
               <div className="flex gap-2 flex-wrap">
                 {languages.map((lang) => (
@@ -150,7 +146,7 @@ const Navigation = () => {
                 ))}
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
       </div>
     </nav>
