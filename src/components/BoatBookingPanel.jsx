@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Users, Euro, Clock } from 'lucide-react';
+import { Calendar, Euro, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,14 +11,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBooking } from '@/contexts/BookingContext';
 
-/**
- * Reglas de duración:
- *  - Horas: 1h,2h,3h,4h,5h,6h
- *  - Medio día: 4h (medio_dia)
- *  - Día: 8h (dia)
- *  - Sunset: 2h (sunset)
- * Precio por hora estimado = pricePerDay / 8 (si no hay tarifa por hora)
- */
 const DURATION_OPTIONS = [
   { value: '1h', label: '1 hora', hours: 1 },
   { value: '2h', label: '2 horas', hours: 2 },
@@ -31,17 +23,17 @@ const DURATION_OPTIONS = [
   { value: 'sunset', label: 'Sunset (2h)', hours: 2 },
 ];
 
-const BoatBookingPanel = ({ boat }) => {
+export default function BoatBookingPanel({ boat }) {
   const { t } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { setCurrentBooking } = useBooking();
 
-  // Si el barco define tarifas por modalidad, úsalo. Si no, derivamos por hora.
   const hourPrice = useMemo(() => {
-    if (boat?.pricePerHour && boat.pricePerHour > 0) return boat.pricePerHour;
-    const perDay = Number(boat?.pricePerDay ?? 0);
+    const perHour = Number(boat?.pricePerHour ?? 0);
+    if (perHour > 0) return perHour;
+    const perDay = Number(boat?.pricePerDay ?? boat?.precio_dia ?? 0);
     return perDay > 0 ? perDay / 8 : 0;
   }, [boat]);
 
@@ -54,20 +46,19 @@ const BoatBookingPanel = ({ boat }) => {
     needsCaptain: false,
   });
 
-  // Si el barco exige patrón, marcarlo
   useEffect(() => {
-    const captainExtra = (boat?.extras ?? []).find((e) => e.id === 'captain');
+    const captainExtra = (boat?.extras ?? []).find((e) => e.id === 'captain' || e.code === 'captain');
     if (captainExtra?.required) {
       setBookingData((prev) => ({
         ...prev,
         needsCaptain: true,
-        selectedExtras: [...new Set([...prev.selectedExtras, 'captain'])],
+        selectedExtras: [...new Set([...prev.selectedExtras, captainExtra.id || 'captain'])],
       }));
     }
   }, [boat]);
 
   const selectedOption = useMemo(
-    () => DURATION_OPTIONS.find((o) => o.value === bookingData.modalidad) ?? DURATION_OPTIONS[7],
+    () => DURATION_OPTIONS.find((o) => o.value === bookingData.modalidad) ?? DURATION_OPTIONS.find(o => o.value === 'dia'),
     [bookingData.modalidad]
   );
 
@@ -83,10 +74,8 @@ const BoatBookingPanel = ({ boat }) => {
   }, [bookingData.startTime, selectedOption]);
 
   const basePrice = useMemo(() => {
-    if (!boat) return 0;
-    // Si es día completo y hay pricePerDay, usarlo; si no, calcular por horas
-    if (bookingData.modalidad === 'dia' && boat?.pricePerDay) return Number(boat.pricePerDay);
-    // Cualquier otra modalidad: horas * pricePerHour (derivado si no existe atributo)
+    const perDay = Number(boat?.pricePerDay ?? boat?.precio_dia ?? 0);
+    if (bookingData.modalidad === 'dia' && perDay > 0) return perDay;
     return (selectedOption?.hours ?? 0) * hourPrice;
   }, [boat, bookingData.modalidad, selectedOption, hourPrice]);
 
@@ -94,33 +83,21 @@ const BoatBookingPanel = ({ boat }) => {
     const extras = boat?.extras ?? [];
     let total = 0;
     bookingData.selectedExtras.forEach((id) => {
-      const ex = extras.find((e) => e.id === id);
+      const ex = extras.find((e) => (e.id || e.code) === id);
       if (!ex) return;
-      // Precio del extra por bloque reservado: prorrateamos por horas si hace falta
-      if (ex.perHour) {
-        total += (selectedOption?.hours ?? 0) * Number(ex.price ?? 0);
-      } else if (ex.perDay) {
-        if (bookingData.modalidad === 'dia') total += Number(ex.price ?? 0);
-        else total += Math.ceil((selectedOption?.hours ?? 0) / 8) * Number(ex.price ?? 0);
-      } else {
-        // precio fijo por reserva
-        total += Number(ex.price ?? 0);
-      }
+      const price = Number(ex.price ?? 0);
+      if (ex.perHour) total += (selectedOption?.hours ?? 0) * price;
+      else if (ex.perDay) total += Math.ceil((selectedOption?.hours ?? 0) / 8) * price;
+      else total += price;
     });
-
-    // Si needsCaptain está activo, asegurar que sumamos patrón
-    const captain = extras.find((e) => e.id === 'captain');
-    if (bookingData.needsCaptain && captain && !bookingData.selectedExtras.includes('captain')) {
-      // suponemos precio por bloque reservado
-      if (captain.perHour) total += (selectedOption?.hours ?? 0) * Number(captain.price ?? 0);
-      else if (captain.perDay) {
-        if (bookingData.modalidad === 'dia') total += Number(captain.price ?? 0);
-        else total += Math.ceil((selectedOption?.hours ?? 0) / 8) * Number(captain.price ?? 0);
-      } else {
-        total += Number(captain.price ?? 0);
-      }
+    // patrón obligado si marcado
+    const cpt = extras.find((e) => e.id === 'captain' || e.code === 'captain');
+    if (bookingData.needsCaptain && cpt && !bookingData.selectedExtras.includes(cpt.id || 'captain')) {
+      const price = Number(cpt.price ?? 0);
+      if (cpt.perHour) total += (selectedOption?.hours ?? 0) * price;
+      else if (cpt.perDay) total += Math.ceil((selectedOption?.hours ?? 0) / 8) * price;
+      else total += price;
     }
-
     return total;
   }, [boat, bookingData.selectedExtras, bookingData.needsCaptain, bookingData.modalidad, selectedOption]);
 
@@ -137,37 +114,29 @@ const BoatBookingPanel = ({ boat }) => {
 
   const handleNeedsCaptainToggle = (checked) => {
     setBookingData((prev) => {
+      const captainId = (boat?.extras ?? []).find((e) => e.id === 'captain' || e.code === 'captain')?.id || 'captain';
       const updatedExtras = checked
-        ? [...new Set([...prev.selectedExtras, 'captain'])]
-        : prev.selectedExtras.filter((id) => id !== 'captain');
+        ? [...new Set([...prev.selectedExtras, captainId])]
+        : prev.selectedExtras.filter((id) => id !== captainId);
       return { ...prev, needsCaptain: checked, selectedExtras: updatedExtras };
     });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!user) {
-      toast({
-        title: 'Inicia sesión para reservar',
-        description: 'Necesitas acceder a tu cuenta para continuar con el pago.',
-      });
+      toast({ title: 'Inicia sesión para reservar', description: 'Accede a tu cuenta para continuar.' });
       navigate('/login');
       return;
     }
-
     if (!bookingData.date || !bookingData.startTime) {
-      toast({
-        variant: 'destructive',
-        title: 'Datos incompletos',
-        description: 'Selecciona fecha y hora de inicio.',
-      });
+      toast({ variant: 'destructive', title: 'Datos incompletos', description: 'Selecciona fecha y hora de inicio.' });
       return;
     }
 
     setCurrentBooking({
       boatId: boat?.id,
-      boatName: boat?.name ?? boat?.title ?? 'Embarcación',
+      boatName: boat?.name ?? boat?.nombre ?? boat?.title ?? 'Embarcación',
       date: bookingData.date,
       startTime: bookingData.startTime,
       endTime,
@@ -183,11 +152,12 @@ const BoatBookingPanel = ({ boat }) => {
       },
     });
 
+    // Aquí NO llamamos a ninguna API. Simplemente vamos a /checkout (tu página de pago/resumen).
     navigate('/checkout');
   };
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="sticky top-24">
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="sticky top-24">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -195,7 +165,7 @@ const BoatBookingPanel = ({ boat }) => {
             <div className="text-right">
               <div className="text-2xl font-bold text-blue-600">€{basePrice.toFixed(0)}</div>
               <div className="text-xs text-gray-500 flex items-center justify-end gap-1">
-                <Clock className="h-3 w-3" /> {selectedOption?.label}
+                <Clock className="h-3 w-3" /> {DURATION_OPTIONS.find(o => o.value === bookingData.modalidad)?.label}
               </div>
             </div>
           </CardTitle>
@@ -241,7 +211,9 @@ const BoatBookingPanel = ({ boat }) => {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">Hora fin estimada: <strong>{endTime || '--:--'}</strong></p>
+              <p className="text-xs text-gray-500 mt-1">
+                Hora fin estimada: <strong>{endTime || '--:--'}</strong>
+              </p>
             </div>
 
             {/* Pasajeros */}
@@ -250,7 +222,7 @@ const BoatBookingPanel = ({ boat }) => {
               <Input
                 type="number"
                 min={1}
-                max={boat?.capacity ?? 12}
+                max={boat?.capacity ?? boat?.capacidad ?? 12}
                 value={bookingData.guests}
                 onChange={(e) => setBookingData((p) => ({ ...p, guests: Number(e.target.value) }))}
               />
@@ -265,7 +237,7 @@ const BoatBookingPanel = ({ boat }) => {
               />
               <label htmlFor="needsCaptain" className="text-sm">Necesito patrón</label>
             </div>
-            <p className="text-xs text-gray-500 -mt-2 mb-2">Obligatorio si no tienes titulación náutica</p>
+            <p className="text-xs text-gray-500 -mt-2 mb-2">Obligatorio si no tienes titulación náutica.</p>
 
             {/* Extras */}
             {Array.isArray(boat?.extras) && boat.extras.length > 0 && (
@@ -273,25 +245,29 @@ const BoatBookingPanel = ({ boat }) => {
                 <h4 className="font-medium mb-2">Extras</h4>
                 <div className="space-y-2">
                   {boat.extras
-                    .filter((e) => e.id !== 'captain')
-                    .map((extra) => (
-                      <div key={extra.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            id={extra.id}
-                            checked={bookingData.selectedExtras.includes(extra.id)}
-                            onCheckedChange={() => handleExtraToggle(extra.id)}
-                          />
-                          <label htmlFor={extra.id} className="text-sm">
-                            {extra.name} {extra.perHour ? '(por hora)' : extra.perDay ? '(por día)' : ''}
-                          </label>
+                    .filter((e) => (e.id || e.code) !== 'captain')
+                    .map((extra) => {
+                      const key = extra.id || extra.code;
+                      return (
+                        <div key={key} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id={key}
+                              checked={bookingData.selectedExtras.includes(key)}
+                              onCheckedChange={() => handleExtraToggle(key)}
+                            />
+                            <label htmlFor={key} className="text-sm">
+                              {extra.name || extra.nombre}{' '}
+                              {extra.perHour ? '(por hora)' : extra.perDay ? '(por día)' : ''}
+                            </label>
+                          </div>
+                          <div className="text-sm text-gray-700 flex items-center gap-1">
+                            <Euro className="h-4 w-4" />
+                            {Number(extra.price ?? extra.precio ?? 0)}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-700 flex items-center gap-1">
-                          <Euro className="h-4 w-4" />
-                          {Number(extra.price ?? 0)}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               </div>
             )}
@@ -303,24 +279,11 @@ const BoatBookingPanel = ({ boat }) => {
             </div>
 
             <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-              Continuar al pago
+              Continuar
             </Button>
           </form>
         </CardContent>
       </Card>
     </motion.div>
   );
-};
-
-export default BoatBookingPanel;
-
-          <p className="text-xs text-gray-600 text-center">
-            El armador tiene 24h para aceptar tu solicitud
-          </p>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-};
-
-export default BoatBookingPanel;
+}
