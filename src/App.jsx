@@ -13,6 +13,7 @@ import Dashboard from '@/pages/Dashboard';
 import BookingCheckout from '@/pages/BookingCheckout';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
+import AdminDashboard from '@/pages/AdminDashboard';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
                 <Route path="/boat/:id" element={<BoatDetails />} />
                 <Route path="/captains" element={<CaptainsPage />} />
                 <Route path="/dashboard/*" element={<Dashboard />} />
+                <Route path="/dashboard/admin" element={<AdminDashboard />} />
                 <Route path="/checkout" element={<BookingCheckout />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />

@@ -75,6 +75,11 @@ const Navigation = () => {
                 <Link to="/dashboard" className="text-white/90 hover:text-white transition-colors">
                   {t('dashboard') ?? 'Panel'}
                 </Link>
+                {user?.role === 'admin' && (
+                  <Link to="/dashboard/admin" className="text-white/90 hover:text-white transition-colors">
+                    Admin
+                  </Link>
+                )}
                 <Button variant="ghost" size="sm" className="text-white/90 hover:text-white" onClick={handleLogout}>
                   <LogOut className="h-4 w-4 mr-1" /> {t('logout') ?? 'Salir'}
                 </Button>
@@ -116,6 +121,11 @@ const Navigation = () => {
                 <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="block py-2 text-white/90 hover:text-white">
                   {t('dashboard') ?? 'Panel'}
                 </Link>
+                {user?.role === 'admin' && (
+                  <Link to="/dashboard/admin" onClick={() => setIsMenuOpen(false)} className="block py-2 text-white/90 hover:text-white">
+                    Admin
+                  </Link>
+                )}
                 <button onClick={handleLogout} className="block py-2 text-left text-white/90 hover:text-white">
                   <LogOut className="inline h-4 w-4 mr-1" /> {t('logout') ?? 'Salir'}
                 </button>
