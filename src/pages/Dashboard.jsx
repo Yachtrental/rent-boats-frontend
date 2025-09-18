@@ -9,7 +9,7 @@ import CustomerDashboard from '@/components/dashboard/CustomerDashboard';
 import OwnerDashboard from '@/components/dashboard/OwnerDashboard';
 import CaptainDashboard from '@/components/dashboard/CaptainDashboard';
 import CollaboratorDashboard from '@/components/dashboard/CollaboratorDashboard';
-import AdminDashboard from '@/components/dashboard/AdminDashboard';
+import { AdminDashboard } from '@/pages/AdminDashboard';
 
 import { useAuth } from '@/contexts/AuthContext';
 
