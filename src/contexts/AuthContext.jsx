@@ -1,59 +1,104 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 
-const AuthContext = createContext();
+import { supabase } from '@/lib/customSupabaseClient';
+import { useToast } from '@/components/ui/use-toast';
+
+const AuthContext = createContext(undefined);
 
 export const AuthProvider = ({ children }) => {
+  const { toast } = useToast();
+
   const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for stored user data
-    const storedUser = localStorage.getItem('rent_boats_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+  const handleSession = useCallback(async (session) => {
+    setSession(session);
+    setUser(session?.user ?? null);
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('rent_boats_user', JSON.stringify(userData));
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('rent_boats_user');
-  };
-
-  const register = (userData) => {
-    const newUser = {
-      ...userData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      role: userData.role || 'customer'
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      handleSession(session);
     };
-    setUser(newUser);
-    localStorage.setItem('rent_boats_user', JSON.stringify(newUser));
-    return newUser;
-  };
 
-  return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      logout,
-      register,
-      loading,
-      isAuthenticated: !!user
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+    getSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        handleSession(session);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [handleSession]);
+
+  const signUp = useCallback(async (email, password, options) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options,
+    });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Sign up Failed",
+        description: error.message || "Something went wrong",
+      });
+    }
+
+    return { error };
+  }, [toast]);
+
+  const signIn = useCallback(async (email, password) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Sign in Failed",
+        description: error.message || "Something went wrong",
+      });
+    }
+
+    return { error };
+  }, [toast]);
+
+  const signOut = useCallback(async () => {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Sign out Failed",
+        description: error.message || "Something went wrong",
+      });
+    }
+
+    return { error };
+  }, [toast]);
+
+  const value = useMemo(() => ({
+    user,
+    session,
+    loading,
+    signUp,
+    signIn,
+    signOut,
+  }), [user, session, loading, signUp, signIn, signOut]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
