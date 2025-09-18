@@ -47,10 +47,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signUp = async ({ email, password, nombre, telefono, role = 'cliente' }) => {
+  const signUp = async ({ email, password, full_name, role = 'cliente' }) => {
     try {
       // Validación
-      if (!email || !password || !nombre || !telefono) {
+      if (!email || !password || !full_name) {
         throw new Error('Todos los campos son obligatorios');
       }
 
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
         options: {
-          data: { nombre, telefono, role }
+          data: { full_name, role }
         }
       });
 
@@ -69,15 +69,13 @@ export const AuthProvider = ({ children }) => {
         throw new Error('No se pudo crear el usuario');
       }
 
-      // Crear perfil
+      // Crear perfil usando los campos correctos del esquema
       const { error: profileError } = await supabase
         .from('perfiles')
         .insert([
           {
             id: authData.user.id,
-            email,
-            nombre,
-            telefono,
+            full_name,
             role
           }
         ]);
@@ -129,7 +127,9 @@ export const AuthProvider = ({ children }) => {
     loading,
     signUp,
     signIn,
-    signOut
+    signOut,
+    isAuthenticated: !!user,
+    isAdmin: user?.role === 'admin'
   };
 
   return (
@@ -146,33 +146,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
-const testUser = {
-  email: "test@example.com",
-  password: "password123",
-  nombre: "Usuario Prueba",
-  telefono: "123456789",
-  role: "cliente"
-};
-
--- Políticas para la tabla perfiles
-create policy "Users can insert their own profile"
-on perfiles for insert
-with check (auth.uid() = id);
-
-create policy "Users can read own profile"
-on perfiles for select
-using (auth.uid() = id);
-
-create policy "Users can update own profile"
-on perfiles for update
-using (auth.uid() = id);
-
-create table perfiles (
-  id uuid references auth.users primary key,
-  email text unique not null,
-  nombre text,
-  telefono text,
-  role text default 'cliente',
-  created_at timestamp with time zone default timezone('utc'::text, now())
-);
