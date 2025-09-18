@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   }, [toast]);
 
   const signIn = useCallback(async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -73,10 +73,13 @@ export const AuthProvider = ({ children }) => {
         title: "Login fallido",
         description: error.message || "Algo salió mal",
       });
+    } else {
+      // 👇 actualizamos sesión y usuario en el contexto
+      handleSession(data.session);
     }
 
-    return { error };
-  }, [toast]);
+    return { error, data };
+  }, [toast, handleSession]);
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
