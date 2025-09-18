@@ -1,65 +1,42 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
-import Navigation from '@/components/Navigation';
-import DashboardSidebar from '@/components/DashboardSidebar';
-import CustomerDashboard from '@/components/dashboard/CustomerDashboard';
-import OwnerDashboard from '@/components/dashboard/OwnerDashboard';
-import CaptainDashboard from '@/components/dashboard/CaptainDashboard';
-import CollaboratorDashboard from '@/components/dashboard/CollaboratorDashboard';
-import { useAuth } from '@/contexts/AuthContext';
+import React from "react";
+import { useAuth } from "@/contexts/AuthContext";
+
+// Importamos cada panel de dashboard
+import AdminDashboard from "@/components/dashboard/AdminDashboard";
+import OwnerDashboard from "@/components/dashboard/OwnerDashboard";
+import CaptainDashboard from "@/components/dashboard/CaptainDashboard";
+import CollaboratorDashboard from "@/components/dashboard/CollaboratorDashboard";
+import CustomerDashboard from "@/components/dashboard/CustomerDashboard";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
+  if (loading) {
+    return <p className="p-6 text-center">Cargando...</p>;
   }
 
-  const getDashboardComponent = () => {
-    switch (user.role) {
-      case 'customer':
-        return <CustomerDashboard />;
-      case 'owner':
-        return <OwnerDashboard />;
-      case 'captain':
-        return <CaptainDashboard />;
-      case 'collaborator':
-        return <CollaboratorDashboard />;
-      default:
-        return <CustomerDashboard />;
-    }
-  };
+  if (!user) {
+    return <p className="p-6 text-center">No has iniciado sesión</p>;
+  }
 
-  return (
-    <>
-      <Helmet>
-        <title>Panel de Control - Rent-Boats.com</title>
-        <meta name="description" content="Gestiona tus reservas, barcos y ganancias desde tu panel de control personalizado en Rent-Boats.com." />
-      </Helmet>
+  // 👇 switch por rol
+  switch (user.role) {
+    case "admin":
+      return <AdminDashboard />;
 
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        
-        <div className="pt-16 flex">
-          <DashboardSidebar />
-          
-          <main className="flex-1 ml-64">
-            <div className="p-8">
-              <Routes>
-                <Route path="/" element={getDashboardComponent()} />
-                <Route path="/bookings" element={getDashboardComponent()} />
-                <Route path="/boats" element={getDashboardComponent()} />
-                <Route path="/earnings" element={getDashboardComponent()} />
-                <Route path="/referrals" element={getDashboardComponent()} />
-                <Route path="/profile" element={getDashboardComponent()} />
-              </Routes>
-            </div>
-          </main>
-        </div>
-      </div>
-    </>
-  );
+    case "armador":
+      return <OwnerDashboard />;
+
+    case "patrón":
+      return <CaptainDashboard />;
+
+    case "colaborador":
+      return <CollaboratorDashboard />;
+
+    case "cliente":
+    default:
+      return <CustomerDashboard />;
+  }
 };
 
 export default Dashboard;
