@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
-
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -12,9 +11,16 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const handleSession = useCallback(async (session) => {
+  const handleSession = useCallback((session) => {
     setSession(session);
-    setUser(session?.user ?? null);
+    if (session?.user) {
+      setUser({
+        ...session.user,
+        role: session.user.user_metadata?.role || "customer",
+      });
+    } else {
+      setUser(null);
+    }
     setLoading(false);
   }, []);
 
@@ -27,7 +33,7 @@ export const AuthProvider = ({ children }) => {
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (_event, session) => {
         handleSession(session);
       }
     );
@@ -35,18 +41,20 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, [handleSession]);
 
-  const signUp = useCallback(async (email, password, options) => {
+  const signUp = useCallback(async (email, password, role = "customer") => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options,
+      options: {
+        data: { role }, // 👈 guardamos el rol
+      },
     });
 
     if (error) {
       toast({
         variant: "destructive",
-        title: "Sign up Failed",
-        description: error.message || "Something went wrong",
+        title: "Registro fallido",
+        description: error.message || "Algo salió mal",
       });
     }
 
@@ -62,8 +70,8 @@ export const AuthProvider = ({ children }) => {
     if (error) {
       toast({
         variant: "destructive",
-        title: "Sign in Failed",
-        description: error.message || "Something went wrong",
+        title: "Login fallido",
+        description: error.message || "Algo salió mal",
       });
     }
 
@@ -76,8 +84,8 @@ export const AuthProvider = ({ children }) => {
     if (error) {
       toast({
         variant: "destructive",
-        title: "Sign out Failed",
-        description: error.message || "Something went wrong",
+        title: "Error al cerrar sesión",
+        description: error.message || "Algo salió mal",
       });
     }
 
