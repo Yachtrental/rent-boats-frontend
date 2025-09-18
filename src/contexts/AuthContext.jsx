@@ -13,7 +13,9 @@ export const AuthProvider = ({ children }) => {
 
   const handleSession = useCallback(async (session) => {
     setSession(session);
+
     if (session?.user) {
+      // 👇 sacamos los datos desde la tabla "perfiles"
       const { data: perfil, error } = await supabase
         .from('perfiles')
         .select('role, full_name, avatar_url')
@@ -33,6 +35,7 @@ export const AuthProvider = ({ children }) => {
     } else {
       setUser(null);
     }
+
     setLoading(false);
   }, []);
 
