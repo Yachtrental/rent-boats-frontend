@@ -208,3 +208,15 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
+/* Policies
+
+create policy "Admins can read all profiles"
+on perfiles for select
+using (auth.user.role = 'admin');
+
+create policy "Admins can update all profiles"
+on perfiles for update
+using (auth.user.role = 'admin');
+
+*/

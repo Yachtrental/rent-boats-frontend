@@ -11,21 +11,50 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Verificar sesión actual
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 
     // Escuchar cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        await fetchUserProfile(session.user.id);
+      } else {
+        setUser(null);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  const fetchUserProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('perfiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      setUser({ ...data, id: userId });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      setUser(null);
+    }
+  };
+
   const signUp = async ({ email, password, nombre, telefono, role = 'cliente' }) => {
     try {
-      // 1. Registrar usuario en Auth
+      // Validación
+      if (!email || !password || !nombre || !telefono) {
+        throw new Error('Todos los campos son obligatorios');
+      }
+
+      // Registro en Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -36,34 +65,35 @@ export const AuthProvider = ({ children }) => {
 
       if (authError) throw authError;
 
-      // 2. Crear perfil en la tabla perfiles
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('perfiles')
-          .insert([
-            {
-              id: authData.user.id,
-              email,
-              nombre,
-              telefono,
-              role,
-              created_at: new Date().toISOString()
-            }
-          ]);
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-          // Intentar revertir el registro de auth
-          await supabase.auth.signOut();
-          throw new Error('Error al crear el perfil');
-        }
-
-        toast.success('Registro exitoso! Por favor verifica tu email.');
-        return authData;
+      if (!authData.user?.id) {
+        throw new Error('No se pudo crear el usuario');
       }
+
+      // Crear perfil
+      const { error: profileError } = await supabase
+        .from('perfiles')
+        .insert([
+          {
+            id: authData.user.id,
+            email,
+            nombre,
+            telefono,
+            role
+          }
+        ]);
+
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        await supabase.auth.signOut();
+        throw new Error('Error al crear el perfil de usuario');
+      }
+
+      toast.success('¡Registro exitoso! Por favor verifica tu email.');
+      return authData;
+
     } catch (error) {
       console.error('Error in signUp:', error);
-      toast.error(error.message);
+      toast.error(error.message || 'Error al registrar usuario');
       throw error;
     }
   };
@@ -115,6 +145,14 @@ export const useAuth = () => {
     throw new Error('useAuth debe usarse dentro de AuthProvider');
   }
   return context;
+};
+
+const testUser = {
+  email: "test@example.com",
+  password: "password123",
+  nombre: "Usuario Prueba",
+  telefono: "123456789",
+  role: "cliente"
 };
 
 -- Políticas para la tabla perfiles
