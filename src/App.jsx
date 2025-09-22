@@ -23,10 +23,22 @@ function App() {
           <Router>
             <Helmet>
               <title>Rent-Boats.com - Alquiler de Barcos en Baleares</title>
-              <meta name="description" content="Marketplace líder para alquilar barcos en las Islas Baleares. Encuentra el barco perfecto para tu aventura marítima con patrón incluido o sin él." />
-              <meta name="keywords" content="alquiler barcos, baleares, mallorca, ibiza, menorca, formentera, charter, nautico" />
-              <meta property="og:title" content="Rent-Boats.com - Alquiler de Barcos en Baleares" />
-              <meta property="og:description" content="Marketplace líder para alquilar barcos en las Islas Baleares" />
+              <meta 
+                name="description" 
+                content="Marketplace líder para alquilar barcos en las Islas Baleares. Encuentra el barco perfecto para tu aventura marítima con patrón incluido o sin él." 
+              />
+              <meta 
+                name="keywords" 
+                content="alquiler barcos, baleares, mallorca, ibiza, menorca, formentera, charter, nautico" 
+              />
+              <meta 
+                property="og:title" 
+                content="Rent-Boats.com - Alquiler de Barcos en Baleares" 
+              />
+              <meta 
+                property="og:description" 
+                content="Marketplace líder para alquilar barcos en las Islas Baleares" 
+              />
               <meta property="og:type" content="website" />
             </Helmet>
             
@@ -37,11 +49,12 @@ function App() {
                 <Route path="/boat/:id" element={<BoatDetails />} />
                 <Route path="/captains" element={<CaptainsPage />} />
                 <Route path="/dashboard/*" element={<Dashboard />} />
-                <Route path="/dashboard/admin" element={<AdminDashboard />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/checkout" element={<BookingCheckout />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
               </Routes>
+              
               <Toaster />
             </div>
           </Router>
