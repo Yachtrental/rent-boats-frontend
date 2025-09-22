@@ -113,7 +113,6 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (error) throw error;
-
       return data;
     } catch (error) {
       toast.error('Error al iniciar sesión');
