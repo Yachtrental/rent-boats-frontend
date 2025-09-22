@@ -22,3 +22,59 @@ export async function testAdminAccess() {
     return { success: false, error: error.message };
   }
 }
+// En tu customSupabaseClient.js, añade esta función de prueba:
+export async function testAuthenticatedAdmin() {
+  try {
+    console.log('=== PRUEBA DE ADMINISTRADOR AUTENTICADO ===');
+    
+    // Verificar sesión actual
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    console.log('1. Estado de sesión:');
+    console.log('   - Sesión existe:', !!session);
+    console.log('   - Email:', session?.user?.email);
+    console.log('   - User ID:', session?.user?.id);
+    console.log('   - Metadatos:', session?.user?.user_metadata);
+    
+    if (!session) {
+      console.log('❌ NO HAY SESIÓN ACTIVA - Necesitas hacer login primero');
+      return null;
+    }
+    
+    // Llamar a test_admin_access con usuario autenticado
+    console.log('2. Llamando a test_admin_access...');
+    const { data: testData, error: testError } = await supabase.rpc('test_admin_access');
+    
+    console.log('3. Resultado de test_admin_access:');
+    console.log('   - Data:', testData);
+    console.log('   - Error:', testError);
+    
+    // Consulta directa a perfiles con RLS
+    console.log('4. Consulta directa a perfiles...');
+    const { data: profileData, error: profileError } = await supabase
+      .from('perfiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
+    
+    console.log('   - Profile data:', profileData);
+    console.log('   - Profile error:', profileError);
+    
+    // Resultado final
+    const isAdmin = testData?.[0]?.is_admin_result || false;
+    console.log('5. RESULTADO FINAL:');
+    console.log('   - Es admin:', isAdmin);
+    
+    if (isAdmin) {
+      console.log('✅ USUARIO CONFIRMADO COMO ADMINISTRADOR');
+      return true;
+    } else {
+      console.log('❌ Usuario NO es administrador');
+      return false;
+    }
+    
+  } catch (error) {
+    console.error('Error en test:', error);
+    return null;
+  }
+}
