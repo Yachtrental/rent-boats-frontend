@@ -113,6 +113,18 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (error) throw error;
+
+      // Forzar refresco del perfil tras login exitoso
+      if (data.user?.id) {
+        await fetchUserProfile(data.user.id);
+      } else {
+        // Fallback: obtener sesión actual si no hay user en data
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user?.id) {
+          await fetchUserProfile(sessionData.session.user.id);
+        }
+      }
+
       return data;
     } catch (error) {
       toast.error('Error al iniciar sesión');
