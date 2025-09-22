@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,7 +23,6 @@ const DURATION_OPTIONS = [
 ];
 
 export default function BoatBookingPanel({ boat }) {
-  const { t } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -99,7 +97,7 @@ export default function BoatBookingPanel({ boat }) {
       else total += price;
     }
     return total;
-  }, [boat, bookingData.selectedExtras, bookingData.needsCaptain, bookingData.modalidad, selectedOption]);
+  }, [boat, bookingData.selectedExtras, bookingData.needsCaptain, selectedOption]);
 
   const total = basePrice + extrasPrice;
 
@@ -133,7 +131,6 @@ export default function BoatBookingPanel({ boat }) {
       toast({ variant: 'destructive', title: 'Datos incompletos', description: 'Selecciona fecha y hora de inicio.' });
       return;
     }
-
     setCurrentBooking({
       boatId: boat?.id,
       boatName: boat?.name ?? boat?.nombre ?? boat?.title ?? 'Embarcación',
@@ -151,17 +148,21 @@ export default function BoatBookingPanel({ boat }) {
         total,
       },
     });
-
     // Aquí NO llamamos a ninguna API. Simplemente vamos a /checkout (tu página de pago/resumen).
     navigate('/checkout');
   };
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="sticky top-24">
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.2 }}
+      className="sticky top-24"
+    >
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Reservar</span>
+            Reservar
             <div className="text-right">
               <div className="text-2xl font-bold text-blue-600">€{basePrice.toFixed(0)}</div>
               <div className="text-xs text-gray-500 flex items-center justify-end gap-1">
@@ -170,9 +171,8 @@ export default function BoatBookingPanel({ boat }) {
             </div>
           </CardTitle>
         </CardHeader>
-
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             {/* Fecha + hora inicio */}
             <div className="grid grid-cols-2 gap-2">
               <div>
@@ -198,7 +198,6 @@ export default function BoatBookingPanel({ boat }) {
                 />
               </div>
             </div>
-
             {/* Modalidad */}
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-1">Duración</label>
@@ -212,10 +211,9 @@ export default function BoatBookingPanel({ boat }) {
                 ))}
               </select>
               <p className="text-xs text-gray-500 mt-1">
-                Hora fin estimada: <strong>{endTime || '--:--'}</strong>
+                Hora fin estimada: {endTime || '--:--'}
               </p>
             </div>
-
             {/* Pasajeros */}
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-1">Pasajeros</label>
@@ -227,7 +225,6 @@ export default function BoatBookingPanel({ boat }) {
                 onChange={(e) => setBookingData((p) => ({ ...p, guests: Number(e.target.value) }))}
               />
             </div>
-
             {/* Patrón */}
             <div className="flex items-center gap-2">
               <Checkbox
@@ -235,10 +232,9 @@ export default function BoatBookingPanel({ boat }) {
                 checked={bookingData.needsCaptain}
                 onCheckedChange={(checked) => handleNeedsCaptainToggle(!!checked)}
               />
-              <label htmlFor="needsCaptain" className="text-sm">Necesito patrón</label>
+              <label className="text-sm" htmlFor="needsCaptain">Necesito patrón</label>
             </div>
             <p className="text-xs text-gray-500 -mt-2 mb-2">Obligatorio si no tienes titulación náutica.</p>
-
             {/* Extras */}
             {Array.isArray(boat?.extras) && boat.extras.length > 0 && (
               <div>
@@ -249,14 +245,14 @@ export default function BoatBookingPanel({ boat }) {
                     .map((extra) => {
                       const key = extra.id || extra.code;
                       return (
-                        <div key={key} className="flex items-center justify-between">
+                        <div className="flex items-center justify-between" key={key}>
                           <div className="flex items-center gap-2">
                             <Checkbox
                               id={key}
                               checked={bookingData.selectedExtras.includes(key)}
                               onCheckedChange={() => handleExtraToggle(key)}
                             />
-                            <label htmlFor={key} className="text-sm">
+                            <label className="text-sm" htmlFor={key}>
                               {extra.name || extra.nombre}{' '}
                               {extra.perHour ? '(por hora)' : extra.perDay ? '(por día)' : ''}
                             </label>
@@ -271,14 +267,12 @@ export default function BoatBookingPanel({ boat }) {
                 </div>
               </div>
             )}
-
             {/* Total */}
             <div className="flex items-center justify-between border-t pt-3">
               <span className="text-sm text-gray-700">Total estimado</span>
               <div className="text-xl font-semibold text-blue-600">€{total.toFixed(0)}</div>
             </div>
-
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+            <Button className="w-full bg-blue-600 hover:bg-blue-700" type="submit">
               Continuar
             </Button>
           </form>
