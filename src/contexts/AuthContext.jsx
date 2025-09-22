@@ -40,6 +40,16 @@ export const AuthProvider = ({ children }) => {
         .single();
 
       if (error) throw error;
+
+      // Console.log agregado para debug del perfil de usuario
+      console.log('=== DEBUG: Perfil de usuario recuperado ===');
+      console.log('ID del usuario:', userId);
+      console.log('Email:', data.email || 'No disponible en perfil');
+      console.log('Role:', data.role);
+      console.log('Registro completo del perfil:', data);
+      console.log('¿Es admin?:', data.role === 'admin');
+      console.log('=========================================');
+
       setUser({ ...data, id: userId });
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -88,7 +98,6 @@ export const AuthProvider = ({ children }) => {
 
       toast.success('¡Registro exitoso! Por favor verifica tu email.');
       return authData;
-
     } catch (error) {
       console.error('Error in signUp:', error);
       toast.error(error.message || 'Error al registrar usuario');
@@ -104,6 +113,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (error) throw error;
+
       return data;
     } catch (error) {
       toast.error('Error al iniciar sesión');
