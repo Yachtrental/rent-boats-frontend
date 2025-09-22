@@ -19,7 +19,7 @@ const BookingCheckout = () => {
   const { user } = useAuth();
   const { currentBooking, createBooking } = useBooking();
   const { toast } = useToast();
-  
+
   const [paymentData, setPaymentData] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -36,7 +36,7 @@ const BookingCheckout = () => {
 
   const handlePayment = async (e) => {
     e.preventDefault();
-    
+
     if (!paymentData.acceptTerms) {
       toast({
         title: t('error'),
@@ -47,16 +47,16 @@ const BookingCheckout = () => {
     }
 
     setProcessing(true);
-
     // Mock payment processing
     setTimeout(() => {
-      const booking = createBooking(currentBooking);
-      
+      // Removed unused variable 'booking'
+      createBooking(currentBooking);
+
       toast({
         title: t('success'),
         description: 'Reserva creada correctamente. El armador tiene 24h para confirmar.',
       });
-      
+
       navigate('/dashboard');
       setProcessing(false);
     }, 2000);
@@ -65,7 +65,7 @@ const BookingCheckout = () => {
   const formatCardNumber = (value) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    const match = (matches && matches[0]) || '';
     const parts = [];
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));
@@ -86,15 +86,11 @@ const BookingCheckout = () => {
 
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        
+
         <div className="pt-20 pb-12">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Back Button */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="mb-6"
-            >
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mb-6">
               <Button
                 variant="ghost"
                 onClick={() => navigate(-1)}
@@ -107,21 +103,18 @@ const BookingCheckout = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Booking Summary */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 <Card>
                   <CardHeader>
                     <CardTitle>Resumen de Reserva</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center space-x-4">
-                      <img  
+                      <img
                         alt={`${currentBooking.boatName} - Barco de alquiler`}
                         className="w-20 h-20 rounded-lg object-cover"
-                       src="https://images.unsplash.com/photo-1454985471578-83a008ed7f88" />
+                        src="https://images.unsplash.com/photo-1454985471578-83a008ed7f88"
+                      />
                       <div>
                         <h3 className="font-semibold text-gray-900">{currentBooking.boatName}</h3>
                         <p className="text-sm text-gray-600">Palma, Mallorca</p>
@@ -154,7 +147,7 @@ const BookingCheckout = () => {
                         </div>
                       )}
 
-                      {currentBooking.selectedExtras && currentBooking.selectedExtras.length > 0 && (
+                      {(currentBooking.selectedExtras && currentBooking.selectedExtras.length > 0) && (
                         <div>
                           <p className="text-sm font-medium mb-2">Extras seleccionados:</p>
                           <ul className="text-sm text-gray-600 space-y-1">
@@ -178,22 +171,26 @@ const BookingCheckout = () => {
                       <span>Precio base</span>
                       <span>€{Math.round(currentBooking.totalPrice * 0.8)}</span>
                     </div>
+
                     {currentBooking.needsCaptain && (
                       <div className="flex justify-between">
                         <span>Patrón</span>
                         <span>€150</span>
                       </div>
                     )}
+
                     <div className="flex justify-between">
                       <span>Extras</span>
                       <span>€{Math.round(currentBooking.totalPrice * 0.2)}</span>
                     </div>
+
                     <div className="border-t pt-3">
                       <div className="flex justify-between font-semibold">
                         <span>Total</span>
                         <span>€{currentBooking.totalPrice}</span>
                       </div>
                     </div>
+
                     <div className="bg-blue-50 p-3 rounded-lg">
                       <div className="flex justify-between text-sm">
                         <span>Depósito a pagar ahora (20%)</span>
@@ -209,11 +206,7 @@ const BookingCheckout = () => {
               </motion.div>
 
               {/* Payment Form */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
@@ -222,29 +215,22 @@ const BookingCheckout = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <form onSubmit={handlePayment} className="space-y-4">
+                    <form className="space-y-4" onSubmit={handlePayment}>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 block mb-2">
-                          Número de tarjeta
-                        </label>
+                        <label className="text-sm font-medium text-gray-700 block mb-2">Número de tarjeta</label>
                         <Input
                           type="text"
                           required
                           placeholder="1234 5678 9012 3456"
                           value={paymentData.cardNumber}
-                          onChange={(e) => setPaymentData({
-                            ...paymentData, 
-                            cardNumber: formatCardNumber(e.target.value)
-                          })}
+                          onChange={(e) => setPaymentData({ ...paymentData, cardNumber: formatCardNumber(e.target.value) })}
                           maxLength={19}
                         />
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="text-sm font-medium text-gray-700 block mb-2">
-                            Fecha de vencimiento
-                          </label>
+                          <label className="text-sm font-medium text-gray-700 block mb-2">Fecha de vencimiento</label>
                           <Input
                             type="text"
                             required
@@ -255,39 +241,32 @@ const BookingCheckout = () => {
                               if (value.length >= 2) {
                                 value = value.substring(0, 2) + '/' + value.substring(2, 4);
                               }
-                              setPaymentData({...paymentData, expiryDate: value});
+                              setPaymentData({ ...paymentData, expiryDate: value });
                             }}
                             maxLength={5}
                           />
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-700 block mb-2">
-                            CVV
-                          </label>
+                          <label className="text-sm font-medium text-gray-700 block mb-2">CVV</label>
                           <Input
                             type="text"
                             required
                             placeholder="123"
                             value={paymentData.cvv}
-                            onChange={(e) => setPaymentData({
-                              ...paymentData, 
-                              cvv: e.target.value.replace(/\D/g, '').substring(0, 3)
-                            })}
+                            onChange={(e) => setPaymentData({ ...paymentData, cvv: e.target.value.replace(/\D/g, '').substring(0, 3) })}
                             maxLength={3}
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className="text-sm font-medium text-gray-700 block mb-2">
-                          Nombre en la tarjeta
-                        </label>
+                        <label className="text-sm font-medium text-gray-700 block mb-2">Nombre en la tarjeta</label>
                         <Input
                           type="text"
                           required
                           placeholder="Juan Pérez"
                           value={paymentData.cardName}
-                          onChange={(e) => setPaymentData({...paymentData, cardName: e.target.value})}
+                          onChange={(e) => setPaymentData({ ...paymentData, cardName: e.target.value })}
                         />
                       </div>
 
@@ -296,9 +275,7 @@ const BookingCheckout = () => {
                           <Shield className="h-5 w-5 text-green-600 mr-2" />
                           <div>
                             <p className="text-sm font-medium text-green-800">Pago seguro</p>
-                            <p className="text-xs text-green-600">
-                              Tu información está protegida con encriptación SSL
-                            </p>
+                            <p className="text-xs text-green-600">Tu información está protegida con encriptación SSL</p>
                           </div>
                         </div>
                       </div>
@@ -307,38 +284,41 @@ const BookingCheckout = () => {
                         <Checkbox
                           id="terms"
                           checked={paymentData.acceptTerms}
-                          onCheckedChange={(checked) => setPaymentData({...paymentData, acceptTerms: checked})}
+                          onCheckedChange={(checked) => setPaymentData({ ...paymentData, acceptTerms: Boolean(checked) })}
                         />
-                        <label htmlFor="terms" className="text-sm text-gray-700">
+                        <label className="text-sm text-gray-700" htmlFor="terms">
                           Acepto los{' '}
-                          <button
+                          <Button
                             type="button"
-                            onClick={() => toast({
-                              title: '🚧 Esta función aún no está implementada—¡pero no te preocupes! ¡Puedes solicitarla en tu próximo mensaje! 🚀'
-                            })}
+                            onClick={() =>
+                              toast({
+                                title:
+                                  '🚧 Esta función aún no está implementada—¡pero no te preocupes! ¡Puedes solicitarla en tu próximo mensaje! 🚀',
+                              })
+                            }
                             className="text-blue-600 hover:underline"
+                            variant="link"
                           >
                             términos y condiciones
-                          </button>
+                          </Button>
                           {' '}y la{' '}
-                          <button
+                          <Button
                             type="button"
-                            onClick={() => toast({
-                              title: '🚧 Esta función aún no está implementada—¡pero no te preocupes! ¡Puedes solicitarla en tu próximo mensaje! 🚀'
-                            })}
+                            onClick={() =>
+                              toast({
+                                title:
+                                  '🚧 Esta función aún no está implementada—¡pero no te preocupes! ¡Puedes solicitarla en tu próximo mensaje! 🚀',
+                              })
+                            }
                             className="text-blue-600 hover:underline"
+                            variant="link"
                           >
                             política de privacidad
-                          </button>
+                          </Button>
                         </label>
                       </div>
 
-                      <Button
-                        type="submit"
-                        disabled={processing}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
-                        size="lg"
-                      >
+                      <Button type="submit" disabled={processing} className="w-full bg-blue-600 hover:bg-blue-700" size="lg">
                         {processing ? (
                           <div className="flex items-center">
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -353,9 +333,7 @@ const BookingCheckout = () => {
                       </Button>
 
                       <div className="text-center">
-                        <p className="text-xs text-gray-600">
-                          El armador tiene 24 horas para confirmar tu reserva
-                        </p>
+                        <p className="text-xs text-gray-600">El armador tiene 24 horas para confirmar tu reserva</p>
                       </div>
                     </form>
                   </CardContent>
