@@ -26,6 +26,11 @@ const testAdminOnLoad = async () => {
   }
 };
 
+// En AdminDashboard.jsx o después del login
+useEffect(() => {
+  testAuthenticatedAdmin();
+}, []);
+
 // Componente de métricas del dashboard
 const DashboardMetrics = () => {
   const [metrics, setMetrics] = useState({
